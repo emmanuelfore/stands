@@ -42,10 +42,41 @@ export function useStands(developmentId?: string) {
     },
   })
 
+  const createStand = useMutation({
+    mutationFn: async (newStand: Partial<Stand>) => {
+      const { data, error } = await supabase
+        .from('stands')
+        .insert([newStand])
+        .select()
+        .single()
+      if (error) throw error
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['stands'] })
+    },
+  })
+
+  const createStands = useMutation({
+    mutationFn: async (newStands: Partial<Stand>[]) => {
+      const { data, error } = await supabase
+        .from('stands')
+        .insert(newStands)
+        .select()
+      if (error) throw error
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['stands'] })
+    },
+  })
+
   return {
     stands,
     isLoading,
     error,
     updateStandStatus,
+    createStand,
+    createStands,
   }
 }

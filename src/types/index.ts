@@ -16,7 +16,7 @@ export type Development = {
   penalty_value: number
   penalty_grace_days: number
   min_deposit_percent: number
-  currency: 'USD' | 'ZWG' | 'BOTH'
+  currency: 'USD'
   created_at: string
 }
 
@@ -59,7 +59,7 @@ export type Allocation = {
   allocated_by: string | null
   allocated_at: string
   purchase_price: number
-  currency: 'USD' | 'ZWG'
+  currency: 'USD'
   deposit_amount: number
   instalment_plan: Record<string, any>
   status: AllocationStatus
@@ -74,7 +74,7 @@ export type Payment = {
   allocation_id: string
   buyer_id: string
   amount: number
-  currency: 'USD' | 'ZWG'
+  currency: 'USD'
   exchange_rate: number
   payment_method: PaymentMethod | null
   reference_number: string | null
@@ -95,8 +95,39 @@ export type PaymentScheduleItem = {
   allocation_id: string
   due_date: string
   amount_due: number
-  currency: 'USD' | 'ZWG'
+  currency: 'USD'
   status: ScheduleItemStatus
   paid_at: string | null
   created_at: string
+}
+
+export type DocumentCategory = 'offer_letter' | 'agreement' | 'receipt' | 'title_deed' | 'id_document' | 'other'
+
+export type Document = {
+  id: string
+  org_id: string
+  stand_id: string | null
+  buyer_id: string | null
+  category: DocumentCategory
+  name: string
+  file_url: string
+  version: number
+  expires_at: string | null
+  uploaded_by: string | null
+  created_at: string
+  stand?: { stand_number: string, development: { name: string } }
+  buyer?: { full_name: string }
+}
+
+export type DocumentRequestStatus = 'open' | 'in_progress' | 'fulfilled'
+
+export type DocumentRequest = {
+  id: string
+  buyer_id: string
+  document_type: string
+  note: string | null
+  status: DocumentRequestStatus
+  fulfilled_at: string | null
+  created_at: string
+  buyer?: { full_name: string, email: string }
 }

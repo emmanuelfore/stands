@@ -186,8 +186,15 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({ onClose, onImport, t
                 {step === 3 && (
                     <Button onClick={() => onImport(fileData.map(row => {
                         const obj: any = {}
+                        // Map required fields
                         REQUIRED_FIELDS[type].forEach(f => {
                             obj[f] = row[headers.indexOf(mapping[f])]
+                        })
+                        // Include all other unmapped columns
+                        headers.forEach((h, index) => {
+                            if (!Object.values(mapping).includes(h)) {
+                                obj[h.toLowerCase().replace(/ /g, '_')] = row[index] || null
+                            }
                         })
                         return obj
                     }))}>

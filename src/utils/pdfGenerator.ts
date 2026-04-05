@@ -47,10 +47,10 @@ export const generateStatementPDF = (buyer: any, allocation: any, schedule: any)
         table: {
           widths: ['*', 'auto'],
           body: [
-            ['Purchase Price', formatCurrency(allocation.purchase_price, allocation.currency)],
-            ['Deposit Paid', formatCurrency(allocation.deposit_amount, allocation.currency)],
-            ['Total Instalments Paid', formatCurrency(totalPaid, allocation.currency)],
-            [{ text: 'OUTSTANDING BALANCE', bold: true }, { text: formatCurrency(balance, allocation.currency), bold: true, color: '#2563eb' }],
+            ['Purchase Price', formatCurrency(allocation.purchase_price)],
+            ['Deposit Paid', formatCurrency(allocation.deposit_amount)],
+            ['Total Instalments Paid', formatCurrency(totalPaid)],
+            [{ text: 'OUTSTANDING BALANCE', bold: true }, { text: formatCurrency(balance), bold: true, color: '#2563eb' }],
           ]
         },
         layout: 'lightHorizontalLines'
@@ -71,7 +71,7 @@ export const generateStatementPDF = (buyer: any, allocation: any, schedule: any)
             ...schedule.map((item: any) => [
               formatDate(item.due_date),
               `Monthly Instalment`,
-              formatCurrency(item.amount_due, item.currency),
+              formatCurrency(item.amount_due),
               { text: item.status.toUpperCase(), color: item.status === 'paid' ? 'green' : item.status === 'overdue' ? 'red' : 'orange' }
             ])
           ]

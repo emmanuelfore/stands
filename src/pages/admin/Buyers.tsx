@@ -9,18 +9,53 @@ import {
   Mail, 
   Calendar,
   ChevronRight,
-  UserCheck
+  UserCheck,
+  Download
 } from 'lucide-react'
 import { useBuyers } from '../../hooks/useBuyers'
+import { useOrganization } from '../../hooks/useOrganization'
 import { Button } from '../../components/ui/Button'
 import { cn, formatDate } from '../../lib/utils'
-
 import { Modal } from '../../components/ui/Modal'
+import { BuyerForm } from '../../components/admin/BuyerForm'
+import { ImportWizard } from '../../components/admin/ImportWizard'
 
 export const BuyersPage: React.FC = () => {
-  const { buyers, isLoading } = useBuyers()
+  const { buyers, isLoading, createBuyer, importWithAllocations } = useBuyers()
+  const { organization } = useOrganization()
   const [searchTerm, setSearchTerm] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isImportOpen, setIsImportOpen] = useState(false)
+
+  const handleAddBuyer = async (data: any) => {
+    if (!organization) return
+    
+    try {
+        await createBuyer.mutateAsync({
+            ...data,
+            org_id: organization.id,
+            onboarding_complete: false
+        })
+        setIsModalOpen(false)
+    } catch (err) {
+        console.error('Failed to create buyer:', err)
+    }
+  }
+
+  const handleBulkImport = async (data: any[]) => {
+    if (!organization) return
+    
+    try {
+        const buyersWithOrg = data.map(b => ({
+            ...b,
+            org_id: organization.id,
+        }))
+        await importWithAllocations.mutateAsync(buyersWithOrg)
+        setIsImportOpen(false)
+    } catch (err) {
+        console.error('Failed to import buyers:', err)
+    }
+  }
 
   return (
     <div className="space-y-8">
@@ -29,10 +64,16 @@ export const BuyersPage: React.FC = () => {
           <h1 className="text-3xl font-display font-bold">Buyers</h1>
           <p className="text-text-secondary mt-1">Manage allocations, onboarding, and profiles.</p>
         </div>
-        <Button onClick={() => setIsModalOpen(true)}>
-          <UserPlus className="w-5 h-5" />
-          Add New Buyer
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button variant="outline" onClick={() => setIsImportOpen(true)}>
+            <Download className="w-5 h-5" />
+            Bulk Import
+          </Button>
+          <Button onClick={() => setIsModalOpen(true)}>
+            <UserPlus className="w-5 h-5" />
+            Add New Buyer
+          </Button>
+        </div>
       </div>
 
       {/* Toolbar */}
@@ -155,9 +196,10 @@ export const BuyersPage: React.FC = () => {
         onClose={() => setIsModalOpen(false)} 
         title="Add New Buyer"
       >
-        <div className="text-text-secondary text-sm italic">
-          Buyer onboarding form would go here. Modal integration verified.
-        </div>
+        <BuyerForm 
+            onSubmit={handleAddBuyer} 
+            isLoading={createBuyer.isPending} 
+        />
       </Modal>
     </div>
   )

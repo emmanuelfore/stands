@@ -12,8 +12,56 @@ import {
 import { Button } from '../../components/ui/Button'
 import { cn } from '../../lib/utils'
 
+import { useAllocations } from '../../hooks/useAllocations'
+import { useBuyers } from '../../hooks/useBuyers'
+import { useDocuments } from '../../hooks/useDocuments'
+import { useOrganization } from '../../hooks/useOrganization'
+import { Modal } from '../../components/ui/Modal'
+
 export const TransferWorkflow: React.FC = () => {
-  const [step, setStep] = useState<1 | 2 | 3>(1)
+  const { allocations, isLoading: isLoadingAllocations, transferAllocation } = useAllocations()
+  const { buyers, isLoading: isLoadingBuyers } = useBuyers()
+  const { organization } = useOrganization()
+  const { uploadDocument } = useDocuments()
+  
+  const [selectedAllocationId, setSelectedAllocationId] = useState('')
+  const [selectedBuyerId, setSelectedBuyerId] = useState('')
+  const [cessionFee, setCessionFee] = useState(400)
+  const [isSuccess, setIsSuccess] = useState(false)
+
+  const selectedAllocation = allocations?.find((a: any) => a.id === selectedAllocationId)
+  const selectedBuyer = buyers?.find((b: any) => b.id === selectedBuyerId)
+
+  const handleTransfer = async () => {
+    if (!selectedAllocationId || !selectedBuyerId) return
+    
+    try {
+        await transferAllocation.mutateAsync({
+            allocationId: selectedAllocationId,
+            newBuyerId: selectedBuyerId
+        })
+        setIsSuccess(true)
+    } catch (err) {
+        console.error('Transfer failed:', err)
+    }
+  }
+
+  if (isSuccess) {
+      return (
+          <div className="min-h-[60vh] flex flex-col items-center justify-center text-center animate-fade-in-up">
+              <div className="w-20 h-20 rounded-full bg-success/20 border border-success/30 flex items-center justify-center mb-6">
+                  <FileCheck className="w-10 h-10 text-success" />
+              </div>
+              <h2 className="text-3xl font-display font-bold mb-2">Transfer Successful</h2>
+              <p className="text-text-secondary max-w-xs mx-auto mb-8">
+                  Property rights have been successfully ceded. New Agreement of Sale generated.
+              </p>
+              <Button onClick={() => setIsSuccess(false)}>
+                  Initiate Another Transfer
+              </Button>
+          </div>
+      )
+  }
 
   return (
     <div className="space-y-8">
@@ -38,23 +86,41 @@ export const TransferWorkflow: React.FC = () => {
                    <div className="grid grid-cols-2 gap-6">
                        <div className="space-y-2">
                            <label className="text-[10px] text-text-muted font-bold uppercase tracking-widest px-1">Current Holder</label>
-                           <div className="p-4 bg-bg-surface border border-border rounded-xl flex items-center gap-3">
-                               <UserMinus className="w-5 h-5 text-danger" />
-                               <div>
-                                   <p className="text-sm font-bold">John Doe</p>
-                                   <p className="text-[10px] text-text-muted">ID: 63-123456-A-42</p>
+                           <select 
+                                className="w-full bg-bg-surface border border-border rounded-xl p-4 text-sm font-bold focus:outline-none focus:border-primary appearance-none cursor-pointer"
+                                value={selectedAllocationId}
+                                onChange={(e) => setSelectedAllocationId(e.target.value)}
+                           >
+                               <option value="">Select Allocation...</option>
+                               {allocations?.map((a: any) => (
+                                   <option key={a.id} value={a.id}>
+                                       {a.buyer.full_name} - Stand {a.stand.stand_number}
+                                   </option>
+                               ))}
+                           </select>
+                           {selectedAllocation && (
+                               <div className="mt-2 px-2">
+                                   <p className="text-[10px] text-text-muted">ID: {selectedAllocation.buyer.id_number}</p>
                                </div>
-                           </div>
+                           )}
                        </div>
-                       <div className="space-y-2 text-right">
+                       <div className="space-y-2">
                            <label className="text-[10px] text-text-muted font-bold uppercase tracking-widest px-1">New Transferee</label>
-                           <div className="p-4 bg-bg-surface border border-border rounded-xl flex items-center justify-end gap-3 text-right">
-                               <div>
-                                   <p className="text-sm font-bold">Tinashe Murambiwa</p>
-                                   <p className="text-[10px] text-text-muted">ID: 08-987654-K-11</p>
+                           <select 
+                                className="w-full bg-bg-surface border border-border rounded-xl p-4 text-sm font-bold focus:outline-none focus:border-primary appearance-none cursor-pointer"
+                                value={selectedBuyerId}
+                                onChange={(e) => setSelectedBuyerId(e.target.value)}
+                           >
+                               <option value="">Select New Buyer...</option>
+                               {buyers?.filter(b => b.id !== selectedAllocation?.buyer_id).map(b => (
+                                   <option key={b.id} value={b.id}>{b.full_name}</option>
+                               ))}
+                           </select>
+                           {selectedBuyer && (
+                               <div className="mt-2 px-2 text-right">
+                                   <p className="text-[10px] text-text-muted">ID: {selectedBuyer.id_number}</p>
                                </div>
-                               <UserPlus className="w-5 h-5 text-success" />
-                           </div>
+                           )}
                        </div>
                    </div>
 
@@ -75,8 +141,13 @@ export const TransferWorkflow: React.FC = () => {
                        </div>
                    </div>
 
-                   <Button className="w-full py-6">
-                       Generate Cession Certificates
+                   <Button 
+                        className="w-full py-6" 
+                        disabled={!selectedAllocationId || !selectedBuyerId}
+                        onClick={handleTransfer}
+                        isLoading={transferAllocation.isPending}
+                   >
+                       Execute Ownership Transfer
                        <FileCheck className="w-5 h-5" />
                    </Button>
               </div>

@@ -13,6 +13,8 @@ import { Button } from '../../components/ui/Button'
 import { cn } from '../../lib/utils'
 import { useStands } from '../../hooks/useStands'
 import { Modal } from '../../components/ui/Modal'
+import { StandForm } from '../../components/admin/StandForm'
+import { ImportWizard } from '../../components/admin/ImportWizard'
 
 type StandStatus = 'available' | 'reserved' | 'allocated' | 'transferred' | 'on_hold'
 
@@ -26,8 +28,27 @@ const statusConfig: Record<StandStatus, { label: string, color: string }> = {
 
 export const StandsPage: React.FC = () => {
   const [view, setView] = useState<'grid' | 'table'>('grid')
-  const { stands, isLoading } = useStands()
+  const { stands, isLoading, createStand, createStands } = useStands()
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isImportOpen, setIsImportOpen] = useState(false)
+
+  const handleCreateStand = async (data: any) => {
+    try {
+        await createStand.mutateAsync(data)
+        setIsModalOpen(false)
+    } catch (err) {
+        console.error('Failed to create stand:', err)
+    }
+  }
+
+  const handleBulkImport = async (data: any[]) => {
+    try {
+        await createStands.mutateAsync(data)
+        setIsImportOpen(false)
+    } catch (err) {
+        console.error('Failed to import stands:', err)
+    }
+  }
 
   return (
     <div className="space-y-8">
@@ -37,9 +58,9 @@ export const StandsPage: React.FC = () => {
           <p className="text-text-secondary mt-1">Allocation, status tracking, and inventory.</p>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="outline">
-            <Download className="w-4 h-4" />
-            Export
+          <Button variant="outline" onClick={() => setIsImportOpen(true)}>
+            <TableIcon className="w-4 h-4" />
+            Bulk Import
           </Button>
           <Button onClick={() => setIsModalOpen(true)}>
             <Plus className="w-5 h-5" />
@@ -124,10 +145,19 @@ export const StandsPage: React.FC = () => {
         onClose={() => setIsModalOpen(false)} 
         title="Add New Stand"
       >
-        <div className="text-text-secondary text-sm italic">
-          Stand creation form would go here. For now, this confirms the modal logic is working.
-        </div>
+        <StandForm 
+            onSubmit={handleCreateStand} 
+            isLoading={createStand.isPending} 
+        />
       </Modal>
+
+      {isImportOpen && (
+          <ImportWizard 
+            type="stands"
+            onClose={() => setIsImportOpen(false)}
+            onImport={handleBulkImport}
+          />
+      )}
 
       {/* Legend */}
       <div className="flex flex-wrap items-center justify-center gap-6 pt-4">

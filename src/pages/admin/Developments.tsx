@@ -1,13 +1,38 @@
 import React, { useState } from 'react'
-import { Plus, Building2, MapPin, BarChart, ChevronRight, Search } from 'lucide-react'
+import { Plus, Building2, MapPin, BarChart, ChevronRight, Search, Users } from 'lucide-react'
 import { useDevelopments } from '../../hooks/useDevelopments'
+import { useOrganization } from '../../hooks/useOrganization'
 import { Button } from '../../components/ui/Button'
 import { cn, formatCurrency } from '../../lib/utils'
 import { Modal } from '../../components/ui/Modal'
+import { DevelopmentForm } from '../../components/admin/DevelopmentForm'
+import { useAdminStats } from '../../hooks/useAdminStats'
 
 export const DevelopmentsPage: React.FC = () => {
   const { developments, isLoading, createDevelopment } = useDevelopments()
+  const { data: stats } = useAdminStats()
+  const { organization, error: orgError } = useOrganization()
   const [isModalOpen, setIsModalOpen] = useState(false)
+
+  const handleCreateDevelopment = async (data: any) => {
+    if (!organization) {
+        alert(`Organization is not loaded yet. Error: ${orgError?.message || 'Loading...'}`)
+        return
+    }
+    
+    try {
+        await createDevelopment.mutateAsync({
+            ...data,
+            org_id: organization.id,
+            currency: 'USD',
+            phases: []
+        })
+        setIsModalOpen(false)
+    } catch (err: any) {
+        console.error('Failed to create development:', err)
+        alert('Failed to create development: ' + err.message)
+    }
+  }
 
   return (
     <div className="space-y-8">
@@ -26,9 +51,9 @@ export const DevelopmentsPage: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {[
           { label: 'Active Projects', value: developments?.length || 0, icon: Building2, color: 'text-primary' },
-          { label: 'Total Stands', value: '1,240', icon: BarChart, color: 'text-accent' },
-          { label: 'Sold Rate', value: '68%', icon: BarChart, color: 'text-success' },
-          { label: 'Total Value', value: '$4.2M', icon: BarChart, color: 'text-trophy' },
+          { label: 'Total Stands', value: stats?.availableStands || 0, icon: BarChart, color: 'text-accent' },
+          { label: 'Total Buyers', value: stats?.activeBuyers || 0, icon: Users, color: 'text-success' },
+          { label: 'Total Value', value: formatCurrency(stats?.totalRevenue || 0), icon: BarChart, color: 'text-trophy' },
         ].map((stat) => (
           <div key={stat.label} className="premium-card flex items-center gap-4">
             <div className={cn("p-3 rounded-lg bg-bg-elevated", stat.color)}>
@@ -79,21 +104,21 @@ export const DevelopmentsPage: React.FC = () => {
 
               <div className="space-y-4">
                 <div className="flex justify-between text-xs">
-                  <span className="text-text-muted">Collection Rate</span>
-                  <span className="text-text-primary font-bold">84%</span>
+                  <span className="text-text-muted">Status</span>
+                  <span className="text-text-primary font-bold">In Progress</span>
                 </div>
                 <div className="h-1.5 bg-bg-elevated rounded-full overflow-hidden">
-                  <div className="h-full bg-success w-[84%] rounded-full" />
+                  <div className="h-full bg-success w-[50%] rounded-full" />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 pt-2 border-t border-border">
                   <div>
-                    <p className="text-[10px] text-text-muted uppercase font-bold tracking-tighter">Stands Sold</p>
-                    <p className="text-lg font-display font-bold">142 / 200</p>
+                    <p className="text-[10px] text-text-muted uppercase font-bold tracking-tighter">Penalty Rate</p>
+                    <p className="text-lg font-display font-bold text-danger">{dev.penalty_type === 'percent' ? `${dev.penalty_value * 100}%` : formatCurrency(dev.penalty_value || 0)}</p>
                   </div>
                   <div>
-                    <p className="text-[10px] text-text-muted uppercase font-bold tracking-tighter">Outstanding</p>
-                    <p className="text-lg font-display font-bold text-danger">$12k</p>
+                    <p className="text-[10px] text-text-muted uppercase font-bold tracking-tighter">Grace Period</p>
+                    <p className="text-lg font-display font-bold text-primary">{dev.penalty_grace_days} Days</p>
                   </div>
                 </div>
               </div>
@@ -125,9 +150,10 @@ export const DevelopmentsPage: React.FC = () => {
         onClose={() => setIsModalOpen(false)} 
         title="Add New Development"
       >
-        <div className="text-text-secondary text-sm italic">
-          Development creation form would go here. This confirms modal integration across admin pages.
-        </div>
+        <DevelopmentForm 
+            onSubmit={handleCreateDevelopment} 
+            isLoading={createDevelopment.isPending} 
+        />
       </Modal>
     </div>
   )

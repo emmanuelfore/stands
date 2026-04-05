@@ -44,7 +44,7 @@ export const PaymentSchedule: React.FC = () => {
                     </td>
                     <td className="px-5 py-4">
                       <p className={cn("text-sm font-mono font-bold", isPaid ? "text-success/50" : "text-text-primary")}>
-                        {formatCurrency(item.amount_due, item.currency)}
+                        {formatCurrency(item.amount_due)}
                       </p>
                     </td>
                     <td className="px-5 py-4">

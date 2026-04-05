@@ -46,13 +46,13 @@ export const SubmitPayment: React.FC = () => {
         popUrl = publicUrl
       }
 
-      const { error } = await supabase
+            const { error } = await supabase
         .from('payments')
         .insert([{
           allocation_id: allocation?.id,
           buyer_id: profile?.id,
           amount: parseFloat(amount),
-          currency: allocation?.currency,
+          currency: 'USD',
           payment_method: method,
           reference_number: reference,
           pop_url: popUrl,
@@ -116,7 +116,7 @@ export const SubmitPayment: React.FC = () => {
             </div>
 
             <div className="space-y-2">
-                <label className="text-[10px] text-text-muted uppercase font-bold tracking-widest ml-1">Amount ({allocation?.currency})</label>
+                <label className="text-[10px] text-text-muted uppercase font-bold tracking-widest ml-1">Amount (USD)</label>
                 <div className="relative">
                     <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-muted" />
                     <input 

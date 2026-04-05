@@ -59,7 +59,7 @@ export const PaymentsQueue: React.FC = () => {
                   </div>
                   <div className="text-right">
                     <p className="text-xs text-text-muted font-bold uppercase tracking-wider mb-1">Amount</p>
-                    <p className="text-xl font-mono font-bold text-primary">{formatCurrency(payment.amount, payment.currency)}</p>
+                    <p className="text-xl font-mono font-bold text-primary">{formatCurrency(payment.amount)}</p>
                   </div>
                 </div>
 

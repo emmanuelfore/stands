@@ -7,7 +7,8 @@ import {
   ArrowUpRight, 
   ArrowDownRight, 
   Clock,
-  ChevronRight
+  ChevronRight,
+  TrendingDown
 } from 'lucide-react'
 import { 
   AreaChart, 
@@ -18,18 +19,31 @@ import {
   Tooltip, 
   ResponsiveContainer 
 } from 'recharts'
-import { cn } from '../../lib/utils'
-
-const data = [
-  { name: 'Jan', revenue: 45000 },
-  { name: 'Feb', revenue: 52000 },
-  { name: 'Mar', revenue: 48000 },
-  { name: 'Apr', revenue: 61000 },
-  { name: 'May', revenue: 55000 },
-  { name: 'Jun', revenue: 67000 },
-]
+import { cn, formatCurrency } from '../../lib/utils'
+import { useAdminStats } from '../../hooks/useAdminStats'
+import { useReports } from '../../hooks/useReports'
+import { formatDistanceToNow } from 'date-fns'
 
 export const AdminDashboard: React.FC = () => {
+  const { data: stats, isLoading: isLoadingStats } = useAdminStats()
+  const { collectionRate, isLoading: isLoadingReports } = useReports()
+
+  if (isLoadingStats || isLoadingReports) {
+    return (
+        <div className="space-y-8 animate-pulse">
+            <div className="h-16 bg-bg-surface rounded-lg"></div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {[1,2,3,4].map(i => <div key={i} className="h-32 bg-bg-surface rounded-lg"></div>)}
+            </div>
+        </div>
+    )
+  }
+
+  const chartData = collectionRate?.map(m => ({
+    name: m.month.split(' ')[0], 
+    revenue: m.actual
+  })) || []
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -41,33 +55,33 @@ export const AdminDashboard: React.FC = () => {
       {/* KPI Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard 
-          title="Total Revenue" 
-          value="$1.24M" 
-          trend="+12.5%" 
+          title="Total Verified Revenue" 
+          value={formatCurrency(stats?.totalRevenue || 0)} 
+          trend="Real-time" 
           trendType="up" 
           icon={CreditCard} 
         />
         <StatCard 
           title="Active Buyers" 
-          value="482" 
-          trend="+3.2%" 
+          value={(stats?.activeBuyers || 0).toString()} 
+          trend="Registered" 
           trendType="up" 
           icon={Users} 
         />
         <StatCard 
           title="Available Stands" 
-          value="24" 
-          trend="-2" 
+          value={(stats?.availableStands || 0).toString()} 
+          trend="Inventory" 
           trendType="neutral" 
           icon={Building2} 
         />
         <StatCard 
           title="Pending Verification" 
-          value="15" 
-          trend="High" 
-          trendType="down" 
+          value={(stats?.pendingVerification || 0).toString()} 
+          trend={stats?.pendingVerification ? 'Action Needed' : 'All Clear'} 
+          trendType={stats?.pendingVerification ? 'down' : 'up'} 
           icon={AlertCircle} 
-          isAlert
+          isAlert={!!stats?.pendingVerification && stats.pendingVerification > 0}
         />
       </div>
 
@@ -77,17 +91,16 @@ export const AdminDashboard: React.FC = () => {
           <div className="flex items-center justify-between mb-8">
             <div>
               <h3 className="text-lg font-bold mb-1">Collection Trend</h3>
-              <p className="text-sm text-text-muted">Monthly payment volume across the portfolio.</p>
+              <p className="text-sm text-text-muted">Monthly payment volume across the portfolio over the last 6 months.</p>
             </div>
             <div className="flex items-center gap-2 bg-bg-elevated p-1 rounded-md text-xs font-medium">
                <button className="px-2 py-1 bg-bg-surface rounded text-text-primary">6 Months</button>
-               <button className="px-2 py-1 text-text-muted hover:text-text-secondary">Year</button>
             </div>
           </div>
           
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+              <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.3}/>
@@ -111,6 +124,7 @@ export const AdminDashboard: React.FC = () => {
                 <Tooltip 
                   contentStyle={{ backgroundColor: '#141720', border: '1px solid #2A2E3D', borderRadius: '8px' }}
                   itemStyle={{ color: '#F0F2F8' }}
+                  formatter={(value: any) => formatCurrency(Number(value))}
                 />
                 <Area 
                   type="monotone" 
@@ -129,36 +143,28 @@ export const AdminDashboard: React.FC = () => {
         <div className="premium-card">
            <div className="flex items-center justify-between mb-6">
               <h3 className="text-lg font-bold">Verification Queue</h3>
-              <button className="text-xs font-bold text-primary hover:text-primary-hover flex items-center gap-1 uppercase tracking-wider">
+              <a href="/admin/payments" className="text-xs font-bold text-primary hover:text-primary-hover flex items-center gap-1 uppercase tracking-wider">
                  View All <ChevronRight className="w-3 h-3" />
-              </button>
+              </a>
            </div>
            
            <div className="space-y-4">
-              <QueueItem 
-                name="Tinashe Mariga" 
-                amount="$1,450.00" 
-                time="10m ago" 
-                project="Hogerty Hill Ph2"
-              />
-              <QueueItem 
-                name="Sarah Mujuru" 
-                amount="$850.00" 
-                time="45m ago" 
-                project="Charlotte Ph2"
-              />
-              <QueueItem 
-                name="Blessing Ncube" 
-                amount="$2,200.00" 
-                time="2h ago" 
-                project="Borrowdale Estate"
-              />
-              <QueueItem 
-                name="Farai Gumbo" 
-                amount="$1,100.00" 
-                time="5h ago" 
-                project="Hogerty Hill Ph2"
-              />
+              {stats?.queue && stats.queue.length > 0 ? (
+                  stats.queue.map((item: any) => (
+                      <QueueItem 
+                        key={item.id}
+                        name={item.buyer?.full_name || 'Unknown Buyer'} 
+                        amount={formatCurrency(item.amount)} 
+                        time={formatDistanceToNow(new Date(item.created_at), { addSuffix: true })} 
+                        project={`${item.allocation?.stand?.development?.name} - Stand ${item.allocation?.stand?.stand_number}`}
+                      />
+                  ))
+              ) : (
+                  <div className="text-center py-8 opacity-60">
+                      <TrendingDown className="w-8 h-8 text-text-muted mx-auto mb-2" />
+                      <p className="text-sm font-bold text-text-muted">Queue is empty!</p>
+                  </div>
+              )}
            </div>
            
            <div className="mt-8 pt-6 border-t border-border">
@@ -210,14 +216,14 @@ const StatCard: React.FC<{
 
 const QueueItem: React.FC<{ name: string, amount: string, time: string, project: string }> = ({ name, amount, time, project }) => (
   <div className="flex items-center gap-4 hover:translate-x-1 transition-transform cursor-pointer group">
-    <div className="w-10 h-10 rounded-full bg-bg-elevated flex items-center justify-center text-text-muted text-xs font-bold ring-2 ring-transparent group-hover:ring-primary/20 transition-all">
-       {name.split(' ').map(n => n[0]).join('')}
+    <div className="w-10 h-10 rounded-full bg-bg-elevated flex items-center justify-center text-text-muted text-xs font-bold ring-2 ring-transparent group-hover:ring-primary/20 transition-all shrink-0">
+       {name.split(' ').slice(0,2).map(n => n?.[0]).join('')}
     </div>
     <div className="flex-1 min-w-0">
       <div className="text-sm font-bold truncate">{name}</div>
       <div className="text-xs text-text-muted truncate">{project}</div>
     </div>
-    <div className="text-right">
+    <div className="text-right shrink-0">
        <div className="text-sm font-bold text-success">{amount}</div>
        <div className="text-[10px] text-text-muted uppercase font-bold">{time}</div>
     </div>

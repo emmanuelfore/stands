@@ -10,8 +10,21 @@ import {
   CreditCard,
   ChevronRight
 } from 'lucide-react'
+import { useReports } from '../../hooks/useReports'
 import { Button } from '../../components/ui/Button'
 import { cn } from '../../lib/utils'
+import { 
+  BarChart as ReBarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer,
+  AreaChart,
+  Area
+} from 'recharts'
+import * as XLSX from 'xlsx'
 
 const reportItems = [
   { 
@@ -53,6 +66,20 @@ const reportItems = [
 ]
 
 export const ReportsPage: React.FC = () => {
+  const { agedDebt, collectionRate, isLoading } = useReports()
+
+  const exportToExcel = (data: any[], fileName: string) => {
+    const ws = XLSX.utils.json_to_sheet(data)
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, "Report")
+    XLSX.writeFile(wb, `${fileName}.xlsx`)
+  }
+
+  const agedDebtData = Object.entries(agedDebt || {}).map(([range, amount]) => ({
+    range,
+    amount
+  }))
+
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
@@ -61,7 +88,7 @@ export const ReportsPage: React.FC = () => {
           <p className="text-text-secondary mt-1">Export high-precision intelligence for your developments.</p>
         </div>
         <div className="flex gap-3">
-          <Button variant="outline">
+          <Button variant="outline" onClick={() => exportToExcel(collectionRate || [], 'Collection_Report')}>
             <FileDown className="w-4 h-4" />
             Export All (Excel)
           </Button>
@@ -98,17 +125,54 @@ export const ReportsPage: React.FC = () => {
                   <TrendingUp className="w-5 h-5 text-primary" />
                   <h4 className="text-sm font-bold text-primary uppercase tracking-widest">Collection Trend</h4>
               </div>
-              <div className="h-48 bg-bg-elevated/50 rounded-xl flex items-center justify-center italic text-text-muted text-xs">
-                  Chart visualization (Recharts) will render here
+              <div className="h-64 rounded-xl overflow-hidden pt-4">
+                  {isLoading ? (
+                      <div className="w-full h-full bg-bg-elevated/50 animate-pulse" />
+                  ) : (
+                    <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={collectionRate}>
+                            <defs>
+                                <linearGradient id="colorActual" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="#2563eb" stopOpacity={0.3}/>
+                                    <stop offset="95%" stopColor="#2563eb" stopOpacity={0}/>
+                                </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#374151" />
+                            <XAxis dataKey="month" stroke="#9ca3af" fontSize={10} axisLine={false} tickLine={false} />
+                            <YAxis stroke="#9ca3af" fontSize={10} axisLine={false} tickLine={false} />
+                            <Tooltip 
+                                contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '8px' }}
+                                itemStyle={{ fontSize: '10px', fontWeight: 'bold' }}
+                            />
+                            <Area type="monotone" dataKey="actual" stroke="#2563eb" fillOpacity={1} fill="url(#colorActual)" />
+                            <Area type="monotone" dataKey="expected" stroke="#9ca3af" fill="transparent" strokeDasharray="5 5" />
+                        </AreaChart>
+                    </ResponsiveContainer>
+                  )}
               </div>
           </div>
           <div className="premium-card bg-accent-muted/10 border-accent/20">
               <div className="flex items-center gap-3 mb-4">
                   <AlertCircle className="w-5 h-5 text-accent" />
-                  <h4 className="text-sm font-bold text-accent uppercase tracking-widest">Overdue Alerts</h4>
+                  <h4 className="text-sm font-bold text-accent uppercase tracking-widest">Aged Debt Breakdown</h4>
               </div>
-              <div className="h-48 bg-bg-elevated/50 rounded-xl flex items-center justify-center italic text-text-muted text-xs">
-                  Aged debt breakdown will render here
+              <div className="h-64 rounded-xl overflow-hidden pt-4">
+              {isLoading ? (
+                      <div className="w-full h-full bg-bg-elevated/50 animate-pulse" />
+                  ) : (
+                    <ResponsiveContainer width="100%" height="100%">
+                        <ReBarChart data={agedDebtData}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#374151" />
+                            <XAxis dataKey="range" stroke="#9ca3af" fontSize={10} axisLine={false} tickLine={false} />
+                            <YAxis stroke="#9ca3af" fontSize={10} axisLine={false} tickLine={false} />
+                            <Tooltip 
+                                cursor={{fill: 'transparent'}}
+                                contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '8px' }}
+                            />
+                            <Bar dataKey="amount" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                        </ReBarChart>
+                    </ResponsiveContainer>
+                  )}
               </div>
           </div>
       </div>

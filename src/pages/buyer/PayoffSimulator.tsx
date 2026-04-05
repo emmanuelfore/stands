@@ -47,7 +47,7 @@ export const PayoffSimulator: React.FC = () => {
         <div className="space-y-4">
           <div className="flex justify-between items-end">
               <label className="text-[10px] text-text-muted uppercase font-bold tracking-widest">Extra Monthly Payment</label>
-              <span className="text-2xl font-mono font-bold text-primary">{formatCurrency(extraPayment, allocation?.currency)}</span>
+              <span className="text-2xl font-mono font-bold text-primary">{formatCurrency(extraPayment)}</span>
           </div>
           
           <input 
@@ -99,7 +99,7 @@ export const PayoffSimulator: React.FC = () => {
         <div className="bg-primary/5 p-4 rounded-xl flex gap-3 border border-primary/10">
             <Info className="w-5 h-5 text-primary shrink-0" />
             <p className="text-xs text-text-secondary leading-relaxed">
-                By paying an extra <span className="font-bold text-text-primary">{formatCurrency(extraPayment, allocation?.currency)}</span> every month, you clear your balance <span className="font-bold text-primary">{result.monthsSaved} months faster</span> than planned.
+                By paying an extra <span className="font-bold text-text-primary">{formatCurrency(extraPayment)}</span> every month, you clear your balance <span className="font-bold text-primary">{result.monthsSaved} months faster</span> than planned.
             </p>
         </div>
 

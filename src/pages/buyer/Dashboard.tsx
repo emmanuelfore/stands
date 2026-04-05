@@ -109,7 +109,7 @@ export const BuyerDashboard: React.FC = () => {
                 </div>
                 <div className="text-right">
                     <p className="text-[10px] text-text-muted uppercase font-bold tracking-widest mb-1">Paid to date</p>
-                    <p className="text-lg font-mono font-bold text-success">{formatCurrency(stats.totalPaid, allocation?.currency)}</p>
+                    <p className="text-lg font-mono font-bold text-success">{formatCurrency(stats.totalPaid)}</p>
                 </div>
             </div>
             <div className="h-3 bg-bg-elevated rounded-full overflow-hidden border border-border/50">
@@ -125,7 +125,7 @@ export const BuyerDashboard: React.FC = () => {
         <div className="bg-bg-elevated/40 border-t border-border p-5 grid grid-cols-2 gap-4">
             <div className="space-y-1">
                 <p className="text-[10px] text-text-muted uppercase font-bold tracking-widest">Remaining</p>
-                <p className="text-lg font-mono font-bold">{formatCurrency(stats.totalDue - stats.totalPaid, allocation?.currency)}</p>
+                <p className="text-lg font-mono font-bold">{formatCurrency(stats.totalDue - stats.totalPaid)}</p>
             </div>
             <div className="space-y-1">
                 <p className="text-[10px] text-text-muted uppercase font-bold tracking-widest">Next Due</p>
